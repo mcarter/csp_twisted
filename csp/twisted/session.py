@@ -202,7 +202,12 @@ class CSPSession(object):
                 continue
             self.lastReceived = key
             if encoding == 1:
-                data = base64.urlsafe_b64decode(data + '==' )
+                # the python 2.6 json library decodes JSON strings to
+                # unicode, while simplejson decodes JSON strings to
+                # str. since, at this point, the data should have
+                # been base64 encoded anyway, we can just cast
+                # the data to a string and call it a day.
+                data = base64.urlsafe_b64decode(str(data) + '==')
             self.protocol.dataReceived(data)
 
     def sendPackets(self, packets=None, finish=False):
