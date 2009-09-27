@@ -4,7 +4,7 @@ import os, sys
 
 setup(
     name='csp',
-    version='0.1alpha1',
+    version='0.1alpha2',
     author='Mario Balibrera',
     author_email='mario.balibrera@gmail.com',
     url='http://www.orbited.org',
@@ -13,7 +13,7 @@ setup(
     long_description='This csp implementation provides a twisted-style Port object that allows you to use existing Twisted Protocols and Factories, but listen to connections from a browser.',
     packages= find_packages(),
     zip_safe = True,
-    install_requires = ['Twisted'],
+    install_requires = [],
     classifiers = [
         'Development Status :: 3 - Alpha',
         'Environment :: Console',

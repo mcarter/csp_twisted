@@ -172,7 +172,7 @@ class CSPSession(object):
         if data is None: # TODO: only encode non-ascii data
             frame = [self.sendId, 0, data]
         else:
-            frame = [self.sendId, 1, base64.b64encode(data)]
+            frame = [self.sendId, 1, base64.urlsafe_b64encode(data)]
         self.buffer.append(frame)
         if self.request:
             if self.permVars["is"]:
@@ -202,7 +202,7 @@ class CSPSession(object):
                 continue
             self.lastReceived = key
             if encoding == 1:
-                data = base64.b64decode(data + '==')
+                data = base64.urlsafe_b64decode(data + '==' )
             self.protocol.dataReceived(data)
 
     def sendPackets(self, packets=None, finish=False):
@@ -214,7 +214,7 @@ class CSPSession(object):
         if finish:
             self.request.finish()
             self.request = None
-
+    
     def renderPrebuffer(self):
         return "%s%s"%(self.prebuffer, self.permVars["p"])
 

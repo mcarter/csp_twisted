@@ -37,7 +37,7 @@ class CometPort(object):
             csp = CSPRootResource(self.killTimeout)
             csp.setConnectCb(self.connectionMade)
             if self.port:
-                self.cspTcpPort = reactor.listenTCP(8050, server.Site(csp), self.backlog, self.interface)
+                self.cspTcpPort = reactor.listenTCP(self.port, server.Site(csp), self.backlog, self.interface)
             elif self.resource and self.childName:
                 self.resource.putChild(self.childName, csp)
         else:
