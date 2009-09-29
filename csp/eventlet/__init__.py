@@ -76,7 +76,6 @@ class Listener(object):
         return session.comet_request(environ, start_response)
 
     def render_handshake(self, session, environ, start_response):
-#        print 'render_handshake'
         key = str(uuid.uuid4()).replace('-', '')
         session = CSPSession(self, key, environ)
         self._sessions[key] = session
@@ -216,7 +215,8 @@ class CSPSession(object):
             self._comet_request_lock.release()
 #            print 'waiting on something...'
             self._comet_request_channel.wait()
-        headers = [ ('Content-type', self.conn_vars['ct']) ]
+        headers = [ ('Content-type', self.conn_vars['ct']) ,
+                    ('Access-Control-Allow-Origin','*') ]
         start_response("200 Ok", headers)
         
         output = self.render_prebuffer() + self.render_packets(self.packets)
@@ -239,7 +239,8 @@ class CSPSession(object):
             
 #    session.render_request({"session":key}, start_response)
     def render_request(self, data, start_response):
-        headers = [ ('Content-type', self.conn_vars['ct']) ]
+        headers = [ ('Content-type', self.conn_vars['ct']),
+                    ('Access-Control-Allow-Origin','*') ]
         start_response("200 Ok", headers)
         output = "%s(%s)%s" % (self.conn_vars["rp"], json.dumps(data), self.conn_vars["rs"])
 #        print 'output', output
