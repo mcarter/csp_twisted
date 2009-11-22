@@ -214,7 +214,15 @@ class CSPSession(object):
                 self._comet_request_channel.send(None)
             self._comet_request_lock.release()
 #            print 'waiting on something...'
-            self._comet_request_channel.wait()
+            duration = self.conn_vars['du']
+            if duration:
+                api.exc_after(duration, Exception("timeout"))
+                try:
+                    self._comet_request_channel.wait()
+                except:
+                    # timeout 
+                    pass
+
         headers = [ ('Content-type', self.conn_vars['ct']) ,
                     ('Access-Control-Allow-Origin','*') ]
         start_response("200 Ok", headers)
