@@ -216,9 +216,10 @@ class CSPSession(object):
 #            print 'waiting on something...'
             duration = self.conn_vars['du']
             if duration:
-                api.exc_after(duration, Exception("timeout"))
+                timer = api.exc_after(duration, Exception("timeout"))
                 try:
                     self._comet_request_channel.wait()
+                    timer.cancel()
                 except:
                     # timeout 
                     pass
