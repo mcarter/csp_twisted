@@ -1,4 +1,6 @@
-from eventlet import api, coros, wsgi
+import eventlet
+from eventlet import wsgi
+#from eventlet import api, coros, wsgi
 import cgi
 import uuid
 import base64
@@ -14,7 +16,7 @@ def test():
         while True:
             conn, addr = l.accept()
             print 'ACCEPTED', conn, addr
-            api.spawn(echo, conn)
+            eventlet.spawn(echo, conn)
     except KeyboardInterrupt:
         print "Ctr-c, Quitting"
         
@@ -38,11 +40,11 @@ class Listener(object):
     def __init__(self, interface=None, port=None):
         self.interface = interface
         self.port = port
-        self._accept_channel = coros.Channel()
+        self._accept_channel = eventlet.queue.Queue(0)
         self._sessions = {}
         
     def listen(self):
-        api.spawn(wsgi.server, api.tcp_listener((self.interface, self.port)), self)
+        eventlet.spawn(wsgi.server, eventlet.tcp_listener((self.interface, self.port)), self)
 
     def __call__(self, environ, start_response):
         path = environ['PATH_INFO']
@@ -79,7 +81,7 @@ class Listener(object):
         key = str(uuid.uuid4()).replace('-', '')
         session = CSPSession(self, key, environ)
         self._sessions[key] = session
-        api.spawn(self._accept_channel.send, (session._socket, ("", 0)))
+        eventlet.spawn(self._accept_channel.put, (session._socket, ("", 0)))
         return session.render_request({"session":key}, start_response)
 
     def render_close(self, session, environ, start_response):
@@ -94,7 +96,7 @@ class Listener(object):
         return environ['csp.form'].get('d', '')
     
     def accept(self):
-        return self._accept_channel.wait()
+        return self._accept_channel.get()
     
 def get_form(environ):
     form = {}
@@ -125,11 +127,11 @@ class CSPSession(object):
         self.packets = []
         self.send_id = 0
         self.buffer = ""
-        self._read_queue = coros.Queue()
+        self._read_queue = eventlet.queue.Queue()
         self.is_closed = False
         self.last_received = 0
-        self._comet_request_lock = coros.semaphore(count=1)
-        self._comet_request_channel = coros.Channel()
+        self._comet_request_lock = eventlet.semaphore.Semaphore(1)
+        self._comet_request_channel = eventlet.queue.Queue(0)
         self.conn_vars = {
             "rp":"",
             "rs":"",
@@ -152,12 +154,12 @@ class CSPSession(object):
         self.send_id+=1
         self.packets.append([self.send_id, 1, base64.urlsafe_b64encode(data)])
         if self._has_comet_request():
-            self._comet_request_channel.send(None)
+            self._comet_request_channel.put(None)
         return len(data)
     
     def blocking_recv(self, max):
         if not self.buffer:
-            self._read_queue.wait()
+            self._read_queue.get()
         data = self.buffer[:max]
         self.buffer = self.buffer[max:]
         return data
@@ -174,7 +176,7 @@ class CSPSession(object):
                 data = base64.urlsafe_b64decode(data + '==' )
             self.last_received = key
             self.buffer += data
-            self._read_queue.send(None)
+            self._read_queue.put(None)
 
     def update_vars(self, form):
         for key in self.conn_vars:
@@ -204,21 +206,21 @@ class CSPSession(object):
         pass
     
     def _has_comet_request(self):
-        return bool(self._comet_request_channel.waiting())
+        return bool(self._comet_request_channel.getting())
     
     def comet_request(self, environ, start_response):
 #        print 'self.packets is', self.packets
         if not self.packets:
             self._comet_request_lock.acquire()
             if self._has_comet_request():
-                self._comet_request_channel.send(None)
+                self._comet_request_channel.put(None)
             self._comet_request_lock.release()
 #            print 'waiting on something...'
             duration = self.conn_vars['du']
             if duration:
-                timer = api.exc_after(duration, Exception("timeout"))
+                timer = eventlet.exc_after(duration, Exception("timeout"))
                 try:
-                    self._comet_request_channel.wait()
+                    self._comet_request_channel.get()
                     timer.cancel()
                 except:
                     # timeout 
