@@ -194,7 +194,6 @@ class CSPSession(object):
                     pass
         ack = form.get("a","-1")
         try:
-            print 'ACK IS', ack
             ack = int(ack)
         except ValueError:
             ack = -1
