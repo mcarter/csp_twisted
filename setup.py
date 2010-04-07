@@ -4,9 +4,9 @@ import os, sys
 
 setup(
     name='csp',
-    version='0.1alpha4',
+    version='0.1alpha5',
     author='Michael Carter',
-    author_email='CarterMichael@gmail.com'
+    author_email='CarterMichael@gmail.com',
     url='http://www.orbited.org',
     license='MIT License',
     description='An implemention of the Comet Session protocol specification for twisted: http://orbited.org/blog/files/cps.html',
