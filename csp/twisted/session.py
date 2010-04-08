@@ -135,7 +135,9 @@ class CSPSession(object):
         self.resetKillTimer()
 
         self.request = request
-
+        def done(e):
+            self.request = None
+        request.notifyFinish().addErrback(done)
         request.setHeader("Content-Type", self.permVars["ct"])
         request.setHeader("Cache-Control", "no-cache, must revalidate")
 
@@ -211,6 +213,8 @@ class CSPSession(object):
             self.protocol.dataReceived(data)
 
     def sendPackets(self, packets=None, finish=False):
+        if not self.request:
+            return
         self.resetIntervalTimer()
         data = self.tryCompress(self.renderPackets(packets))
         if finish:
