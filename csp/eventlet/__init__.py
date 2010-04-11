@@ -1,3 +1,4 @@
+from __future__ import with_statement
 import eventlet
 from eventlet import wsgi
 #from eventlet import api, coros, wsgi
