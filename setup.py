@@ -4,7 +4,7 @@ import os, sys
 
 setup(
     name='csp',
-    version='0.1alpha7',
+    version='0.1alpha8',
     author='Michael Carter',
     author_email='CarterMichael@gmail.com',
     url='http://www.orbited.org',
