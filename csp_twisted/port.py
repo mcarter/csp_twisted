@@ -20,7 +20,7 @@ class CometPort(object):
     """
     implements(interfaces.IListeningPort)
 
-    def __init__(self, port=None, factory=None, backlog=50, interface='', reactor=None, resource=None, childName=None, killTimeout=10):
+    def __init__(self, port=None, factory=None, backlog=50, interface='', reactor=None, resource=None, childName=None, killTimeout=60):
         self.port = port
         self.factory = factory
         self.backlog = backlog
@@ -38,6 +38,7 @@ class CometPort(object):
             csp.setConnectCb(self.connectionMade)
             if self.port:
                 self.cspTcpPort = reactor.listenTCP(self.port, server.Site(csp), self.backlog, self.interface)
+                print 'now listening', self.port
             elif self.resource and self.childName:
                 self.resource.putChild(self.childName, csp)
         else:

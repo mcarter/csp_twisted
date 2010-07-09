@@ -31,7 +31,7 @@ class CSPSession(object):
         self.permVars = {
             "rp":"",
             "rs":"",
-            "du":30,
+            "du":5,
             "is":False,
             "i":0,
             "ps":0,
@@ -45,6 +45,7 @@ class CSPSession(object):
         self.updateVars(request)
 
     def updateVars(self, request):
+        self.resetKillTimer(self.close)        
         for key in self.permVars:
             if key in request.args:
                 newVal = request.args.get(key)[0]
@@ -74,13 +75,13 @@ class CSPSession(object):
             self.endStream()
         self.destroySessionCb(self)
 
-    def resetKillTimer(self, cb=None):
+    def resetKillTimer(self, cb=None,timeout=None):
         if self.killTimer:
             if self.killTimer.active():
                 self.killTimer.cancel()
             self.killTimer = None
         if cb:
-            self.killTimer = reactor.callLater(self.killTimeout, cb)
+            self.killTimer = reactor.callLater(timeout or self.killTimeout, cb)
 
     def resetDurationTimer(self):
         if self.durationTimer:
@@ -98,7 +99,6 @@ class CSPSession(object):
 
     def durationCb(self):
         self.durationTimer = None
-        self.resetKillTimer(self.close)
         
 #        self.endStream()
         
@@ -132,8 +132,6 @@ class CSPSession(object):
         return s
 
     def setCometRequest(self, request):
-        self.resetKillTimer()
-
         self.request = request
         def done(e):
             self.request = None
@@ -165,9 +163,13 @@ class CSPSession(object):
     def close(self):
         if not self.isClosed:
             self.write(None) 
-            self.protocol.connectionLost()
+            self.protocol.connectionLost(None)
             self.isClosed = True
-            self.resetKillTimer(self.teardown)
+            # TODO: Giving the client ten seconds seems sort of arbitrary...
+            if self.buffer:
+                self.resetKillTimer(self.teardown, 10)
+            else:
+                self.teardown()
 
     def write(self, data):
         self.sendId += 1
@@ -203,6 +205,8 @@ class CSPSession(object):
             if self.lastReceived >= key:
                 continue
             self.lastReceived = key
+            if data is None:
+                return self.close()
             if encoding == 1:
                 # the python 2.6 json library decodes JSON strings to
                 # unicode, while simplejson decodes JSON strings to
