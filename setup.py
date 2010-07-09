@@ -3,8 +3,8 @@ import os, sys
 
 
 setup(
-    name='csp',
-    version='0.1alpha9',
+    name='csp_twisted',
+    version='0.2.0',
     author='Michael Carter',
     author_email='CarterMichael@gmail.com',
     url='http://www.orbited.org',
